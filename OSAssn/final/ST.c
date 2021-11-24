@@ -18,9 +18,9 @@
 pid_t S1pid;  
 
 void handlerST(int signo){
-  unsigned hi, lo;
-  __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
-  unsigned long long b= ((unsigned long long)lo)|( ((unsigned long long)hi)<<32) ;
+  unsigned high, low;
+  __asm__ __volatile__ ("rdtsc" : "=a"(low), "=d"(high));
+  unsigned long long b= ((unsigned long long)low)|( ((unsigned long long)high)<<32) ;
     unsigned long long freq=2.375e9;
     int sec;
 	 sec=(b/freq);
@@ -30,6 +30,7 @@ void handlerST(int signo){
    char buff[256];
    char time[512]="";
    char colon=':';
+   
    sprintf(buff,"%d",hh);
    strncat(time,buff,sizeof(int));
    strncat(time,&colon,sizeof(char));
@@ -38,14 +39,23 @@ void handlerST(int signo){
    strncat(time,&colon,sizeof(char));
    sprintf(buff,"%d",ss);
    strncat(time,buff,sizeof(int));
-   strncat(time,&colon,sizeof(char));
+   
+   key_t key=ftok("shmfile",2021);
+  int shmid=shmget(key,1024,0666|IPC_CREAT);
+  char* shared_mem=(char*)shmat(shmid,NULL,0);
+   strcpy(shared_mem,time);
    
    union sigval val;
    val.sival_ptr=time;
    if(sigqueue(getpid(),SIGTERM,val)==-1)
-    perror("Error while queueing string for ST ");
-   if(sigqueue(S1pid,SIGTERM,val)==-1)
-    perror("Error while queueing string for ST ");
+    perror("Error while queueing for ST from ST ");
+
+   union sigval val1;
+   val1.sival_int=-69;
+   if(sigqueue(S1pid,SIGTERM,val1)==-1)
+    perror("Error while queueing for S1 from ST ");
+
+   shmdt(shared_mem);
    
 }
 

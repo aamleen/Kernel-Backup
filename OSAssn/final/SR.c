@@ -28,7 +28,7 @@ void handlerSR(int iSig){
     }
     union sigval val;
     val.sival_int=rand_no;
-    printf("SRRandom no. is: %u\n",val.sival_int);
+    printf("SR_Random no. is: %u\n",val.sival_int);
     if(sigqueue(S1pid,SIGTERM,val)==-1)    
         perror("Error while queuing ");
 }

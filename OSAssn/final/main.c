@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <sys/shm.h>
 #include <unistd.h>
 #include <inttypes.h>
 #include <fcntl.h>
@@ -11,13 +12,19 @@
 #include <signal.h>
 
 void handlerS1(int signo,siginfo_t *signal_data,void *extra){
-    /* struct sigaction sAction;
-    sAction.sa_flags=SA_SIGINFO;
-    sAction.sa_sigaction=&handlerS1;
-    sigaction(SIGTERM, &sAction, NULL);
-     */
+    
+    if(signal_data->si_value.sival_int==-69){
+        key_t key=ftok("shmfile",2021);
+        int shmid=shmget(key,1024,0666);
+        char* shared_mem=(char*)shmat(shmid,NULL,0);
+        printf("Timestamp in S1 handler: %s\n\n",shared_mem);
+        shmdt(shared_mem);
+        shmctl(shmid,IPC_RMID,NULL);
+        return;
+    }
+    
     int ret=signal_data->si_value.sival_int;
-    printf("Value recieved in S1 from PID%d is: %u \n\n",signal_data->si_pid,ret);
+    printf("S1_Random no. is: %u \n\n",ret);
 }
 
 int main(){
